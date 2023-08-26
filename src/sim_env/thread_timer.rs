@@ -1,12 +1,15 @@
 use super::{Callback, SimEnvErrors, Timers, FIVE_HERTZ_MS, TEN_HERTZ_MS, TWENTY_HERTZ_MS};
-
+use timer::Timer;
 extern crate chrono;
 extern crate timer;
 
 pub struct ThreadTimer {
     five_hertz_callbacks: Vec<Callback>,
+    five_hertz_guard: Option<timer::Guard>,
     ten_hertz_callbacks: Vec<Callback>,
+    ten_hertz_guard: Option<timer::Guard>,
     twenty_hertz_callbacks: Vec<Callback>,
+    twenty_hertz_guard: Option<timer::Guard>,
     executing: bool,
 }
 
@@ -14,8 +17,11 @@ impl ThreadTimer {
     pub fn init() -> Self {
         ThreadTimer {
             five_hertz_callbacks: Vec::new(),
+            five_hertz_guard: None,
             ten_hertz_callbacks: Vec::new(),
+            ten_hertz_guard: None,
             twenty_hertz_callbacks: Vec::new(),
+            twenty_hertz_guard: None,
             executing: false,
         }
     }
@@ -38,39 +44,33 @@ impl ThreadTimer {
             Err(SimEnvErrors::ExecFail)
         } else {
             self.executing = true;
-            let timer = timer::Timer::new();
+            let timer = Timer::new();
 
-            let _five_hertz_guard = {
-                let cbs = self.five_hertz_callbacks.clone();
-                timer.schedule_repeating(chrono::Duration::milliseconds(FIVE_HERTZ_MS), move || {
-                    cbs.iter().for_each(|cb| {
-                        cb();
-                    });
-                })
-            };
+            self.five_hertz_guard = Some(exec_repeating_fn(
+                &timer,
+                FIVE_HERTZ_MS,
+                self.five_hertz_callbacks.clone(),
+            ));
 
-            let _ten_hertz_guard = {
-                let cbs = self.ten_hertz_callbacks.clone();
-                timer.schedule_repeating(chrono::Duration::milliseconds(TEN_HERTZ_MS), move || {
-                    cbs.iter().for_each(|cb| {
-                        cb();
-                    });
-                })
-            };
+            self.ten_hertz_guard = Some(exec_repeating_fn(
+                &timer,
+                TEN_HERTZ_MS,
+                self.ten_hertz_callbacks.clone(),
+            ));
 
-            let _twenty_hertz_guard = {
-                let cbs = self.twenty_hertz_callbacks.clone();
-                timer.schedule_repeating(
-                    chrono::Duration::milliseconds(TWENTY_HERTZ_MS),
-                    move || {
-                        cbs.iter().for_each(|cb| {
-                            cb();
-                        });
-                    },
-                )
-            };
-
-            loop {}
+            self.twenty_hertz_guard = Some(exec_repeating_fn(
+                &timer,
+                TWENTY_HERTZ_MS,
+                self.twenty_hertz_callbacks.clone(),
+            ));
+            Ok(())
         }
     }
+}
+fn exec_repeating_fn(timer: &Timer, schedule: i64, cbs: Vec<Callback>) -> timer::Guard {
+    timer.schedule_repeating(chrono::Duration::milliseconds(schedule), move || {
+        cbs.iter().for_each(|cb| {
+            cb();
+        });
+    })
 }
