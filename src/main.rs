@@ -1,3 +1,5 @@
+use std::thread;
+
 mod sim_env;
 
 fn periodic_test() -> () {
@@ -23,4 +25,11 @@ fn main() {
     let _ = timer_fns.register(sim_env::Timers::TwentyHertz, periodic_test3);
 
     let _ = timer_fns.start_execution();
+
+    thread::sleep(std::time::Duration::new(1, 0));
+    let _ = timer_fns.stop_execution();
+
+    println!("Done testing threads!");
+    thread::sleep(std::time::Duration::new(1, 0));
+    println!("Ending now.")
 }

@@ -9,6 +9,7 @@ pub enum Timers {
 pub enum SimEnvErrors {
     RegisterFail,
     ExecFail,
+    StopFail,
 }
 
 type Callback = fn();

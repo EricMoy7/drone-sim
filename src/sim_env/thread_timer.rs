@@ -11,6 +11,7 @@ pub struct ThreadTimer {
     twenty_hertz_callbacks: Vec<Callback>,
     twenty_hertz_guard: Option<timer::Guard>,
     executing: bool,
+    timer: Timer,
 }
 
 impl ThreadTimer {
@@ -23,6 +24,7 @@ impl ThreadTimer {
             twenty_hertz_callbacks: Vec::new(),
             twenty_hertz_guard: None,
             executing: false,
+            timer: Timer::new(),
         }
     }
 
@@ -44,33 +46,39 @@ impl ThreadTimer {
             Err(SimEnvErrors::ExecFail)
         } else {
             self.executing = true;
-            let timer = Timer::new();
 
-            self.five_hertz_guard = Some(exec_repeating_fn(
-                &timer,
+            self.five_hertz_guard = exec_repeating_fn(
+                &self.timer,
                 FIVE_HERTZ_MS,
                 self.five_hertz_callbacks.clone(),
-            ));
+            );
 
-            self.ten_hertz_guard = Some(exec_repeating_fn(
-                &timer,
-                TEN_HERTZ_MS,
-                self.ten_hertz_callbacks.clone(),
-            ));
+            self.ten_hertz_guard =
+                exec_repeating_fn(&self.timer, TEN_HERTZ_MS, self.ten_hertz_callbacks.clone());
 
-            self.twenty_hertz_guard = Some(exec_repeating_fn(
-                &timer,
+            self.twenty_hertz_guard = exec_repeating_fn(
+                &self.timer,
                 TWENTY_HERTZ_MS,
                 self.twenty_hertz_callbacks.clone(),
-            ));
+            );
+            Ok(())
+        }
+    }
+
+    pub fn stop_execution(self) -> Result<(), SimEnvErrors> {
+        if !self.executing {
+            Err(SimEnvErrors::StopFail)
+        } else {
+            drop(self);
             Ok(())
         }
     }
 }
-fn exec_repeating_fn(timer: &Timer, schedule: i64, cbs: Vec<Callback>) -> timer::Guard {
-    timer.schedule_repeating(chrono::Duration::milliseconds(schedule), move || {
+fn exec_repeating_fn(timer: &Timer, schedule: i64, cbs: Vec<Callback>) -> Option<timer::Guard> {
+    let guard = timer.schedule_repeating(chrono::Duration::milliseconds(schedule), move || {
         cbs.iter().for_each(|cb| {
             cb();
         });
-    })
+    });
+    Some(guard)
 }
