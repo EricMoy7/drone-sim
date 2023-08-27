@@ -2,6 +2,8 @@ use std::thread;
 
 mod sim_env;
 
+mod opengl;
+
 fn periodic_test() -> () {
     println!("Hello!")
 }
@@ -16,20 +18,21 @@ fn periodic_test3() -> () {
 
 fn main() {
     println!("Hello, I am a drone!");
+    
+    opengl::test::run()
+    // let mut timer_fns: sim_env::thread_timer::ThreadTimer =
+    //     sim_env::thread_timer::ThreadTimer::init();
 
-    let mut timer_fns: sim_env::thread_timer::ThreadTimer =
-        sim_env::thread_timer::ThreadTimer::init();
+    // let _ = timer_fns.register(sim_env::Timers::FiveHertz, periodic_test);
+    // let _ = timer_fns.register(sim_env::Timers::TenHertz, periodic_test2);
+    // let _ = timer_fns.register(sim_env::Timers::TwentyHertz, periodic_test3);
 
-    let _ = timer_fns.register(sim_env::Timers::FiveHertz, periodic_test);
-    let _ = timer_fns.register(sim_env::Timers::TenHertz, periodic_test2);
-    let _ = timer_fns.register(sim_env::Timers::TwentyHertz, periodic_test3);
+    // let _ = timer_fns.start_execution();
 
-    let _ = timer_fns.start_execution();
+    // thread::sleep(std::time::Duration::new(1, 0));
+    // let _ = timer_fns.stop_execution();
 
-    thread::sleep(std::time::Duration::new(1, 0));
-    let _ = timer_fns.stop_execution();
-
-    println!("Done testing threads!");
-    thread::sleep(std::time::Duration::new(1, 0));
-    println!("Ending now.")
+    // println!("Done testing threads!");
+    // thread::sleep(std::time::Duration::new(1, 0));
+    // println!("Ending now.")
 }

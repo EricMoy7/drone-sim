@@ -8,3 +8,7 @@ edition = "2021"
 [dependencies]
 chrono = "0.4.26"
 timer = "0.2.0"
+winit = "0.28"
+env_logger = "0.10"
+log = "0.4"
+wgpu = "0.17"
